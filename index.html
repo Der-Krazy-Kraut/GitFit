@@ -82,17 +82,23 @@
         const auth = getAuth(app);
         const db = getFirestore(app);
 
+        // Prüfe Login-Status
         onAuthStateChanged(auth, (user) => {
-            if (user) document.getElementById('login-overlay').classList.add('hidden');
-            else document.getElementById('login-overlay').classList.remove('hidden');
+            if (user) {
+                document.getElementById('login-overlay').classList.add('hidden');
+            } else {
+                document.getElementById('login-overlay').classList.remove('hidden');
+            }
         });
 
+        // E-Mail/Passwort Login-Event
         document.getElementById('btn-login').addEventListener('click', async () => {
             const email = document.getElementById('email').value;
             const pw = document.getElementById('password').value;
             try {
                 await signInWithEmailAndPassword(auth, email, pw);
             } catch (err) {
+                console.error("Login Error:", err);
                 document.getElementById('login-error').classList.remove('hidden');
             }
         });
