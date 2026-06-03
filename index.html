@@ -1,0 +1,159 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>GitFit</title>
+    
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+
+    <style>
+        body { background-color: #0f172a; color: #f8fafc; -webkit-tap-highlight-color: transparent; padding-bottom: 80px; }
+        .input-gym { background-color: #1e293b; border: 1px solid #334155; color: white; }
+        .input-gym:focus { outline: none; border-color: #3b82f6; }
+        .no-scrollbar::-webkit-scrollbar { display: none; }
+        .no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
+    </style>
+</head>
+<body class="antialiased">
+
+    <header class="bg-slate-800 p-4 sticky top-0 z-10 shadow-md">
+        <h1 class="text-xl font-bold text-blue-400 flex items-center gap-2">
+            <i class="fa-solid fa-hand-fist"></i> GitFit
+        </h1>
+    </header>
+
+    <main class="p-4" id="main-content">
+        <section id="view-dashboard" class="view-section">
+            <h2 class="text-2xl font-bold mb-4">Übersicht</h2>
+            <div class="grid grid-cols-2 gap-4 mb-6">
+                <div class="bg-slate-800 p-4 rounded-2xl shadow">
+                    <p class="text-slate-400 text-sm">Workouts diesen Monat</p>
+                    <p class="text-2xl font-bold text-white mt-1">12</p>
+                </div>
+                <div class="bg-slate-800 p-4 rounded-2xl shadow">
+                    <p class="text-slate-400 text-sm">Bewegtes Volumen</p>
+                    <p class="text-2xl font-bold text-white mt-1">14.5 t</p>
+                </div>
+            </div>
+            <div class="bg-slate-800 p-4 rounded-2xl shadow w-full mb-6">
+                <div class="flex justify-between items-center mb-2">
+                    <h3 class="text-sm font-semibold text-slate-300">Verlauf</h3>
+                    <div class="flex gap-3 text-xs">
+                        <button id="btn-chart-vol" class="text-blue-400 font-bold">Volumen</button>
+                        <button id="btn-chart-sets" class="text-slate-500 hover:text-slate-300">Sätze</button>
+                    </div>
+                </div>
+                <div class="relative h-[200px] w-full"><canvas id="volumeChart"></canvas></div>
+            </div>
+            <div class="bg-slate-800 p-4 rounded-2xl shadow w-full">
+                <h3 class="text-sm font-semibold text-slate-300 mb-4">Letzte Workouts</h3>
+                <div id="recent-workouts-list" class="space-y-3"><p class="text-slate-400 text-sm italic">Lade Workouts...</p></div>
+            </div>
+        </section>
+
+        <section id="view-workout" class="view-section hidden">
+            <div class="flex justify-between items-center mb-6">
+                <h2 id="workout-view-title" class="text-2xl font-bold">Neues Workout</h2>
+                <button id="btn-save-workout" class="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-xl font-semibold">Speichern</button>
+            </div>
+            <div class="mb-6">
+                <label class="block text-sm font-medium text-slate-400 mb-2">Übung auswählen</label>
+                <select id="exercise-select" class="w-full p-4 rounded-xl input-gym text-lg appearance-none">
+                    <option value="" disabled selected>Bitte wählen...</option>
+                </select>
+            </div>
+            <div id="tracking-input-area" class="bg-slate-800 p-4 rounded-2xl shadow mb-6 hidden">
+                <div class="flex justify-between items-center mb-4">
+                    <h3 id="current-exercise-title" class="font-bold text-lg text-blue-400">Übung</h3>
+                    <button id="btn-show-media" class="text-slate-400 hover:text-blue-400 hidden transition-colors"><i class="fa-solid fa-image text-xl"></i></button>
+                </div>
+                <div id="media-container" class="mb-4 hidden"><img id="exercise-media-img" src="" class="w-full rounded-xl"></div>
+                <div id="dynamic-inputs" class="flex gap-2 mb-4"></div>
+                <button id="btn-add-set" class="w-full bg-slate-700 hover:bg-slate-600 text-white p-4 rounded-xl font-bold mt-2">Satz hinzufügen</button>
+            </div>
+            <div id="current-sets-list" class="space-y-2"></div>
+        </section>
+
+        <section id="view-exercises" class="view-section hidden">
+            <h2 class="text-2xl font-bold mb-6">Geräte & Übungen</h2>
+            <div class="bg-slate-800 p-4 rounded-2xl shadow mb-6">
+                <h3 class="font-bold text-lg text-blue-400 mb-4">Gerätearten verwalten</h3>
+                <div class="flex gap-2 mb-4">
+                    <input type="text" id="new-equipment-name" class="flex-1 p-3 rounded-xl input-gym" placeholder="z.B. Langhantel...">
+                    <button id="btn-save-equipment" class="bg-slate-700 hover:bg-blue-600 text-white px-5 rounded-xl"><i class="fa-solid fa-plus"></i></button>
+                </div>
+                <div id="equipment-list" class="space-y-2"></div>
+            </div>
+            <div class="bg-slate-800 p-4 rounded-2xl shadow mb-6">
+                <h3 id="exercise-form-title" class="font-bold text-lg text-blue-400 mb-4">Neue Übung anlegen</h3>
+                <input type="text" id="new-ex-name" class="w-full p-3 mb-3 rounded-xl input-gym" placeholder="Name der Übung">
+                <label class="text-xs text-slate-400">Primäre Muskeln</label>
+                <div id="primary-muscles-container" class="flex flex-wrap gap-2 mt-2 mb-3"></div>
+                <label class="text-xs text-slate-400">Sekundäre Muskeln</label>
+                <div id="secondary-muscles-container" class="flex flex-wrap gap-2 mt-2 mb-3"></div>
+                <select id="new-ex-equipment" class="w-full p-3 mb-3 rounded-xl input-gym"></select>
+                <input type="url" id="new-ex-media-url" class="w-full p-3 mb-3 rounded-xl input-gym" placeholder="GIF-URL (Optional)">
+                <select id="new-ex-type" class="w-full p-3 mb-6 rounded-xl input-gym">
+                    <option value="weight_reps">Gewicht + Wdh + Sätze</option>
+                    <option value="time_sets">Zeit + Sätze</option>
+                    <option value="time_distance">Zeit + Distanz</option>
+                    <option value="time_only">Nur Zeit</option>
+                </select>
+                <button id="btn-save-exercise" class="w-full bg-blue-600 text-white p-3 rounded-xl font-bold">Speichern</button>
+            </div>
+            <div id="exercises-list" class="space-y-2"></div>
+        </section>
+    </main>
+
+    <nav class="fixed bottom-0 w-full bg-slate-800 border-t border-slate-700 flex justify-around p-2 z-20">
+        <button onclick="switchView('view-dashboard')" class="nav-btn flex flex-col items-center p-2 w-full text-blue-500"><i class="fa-solid fa-chart-pie text-xl"></i><span class="text-xs">Dashboard</span></button>
+        <button onclick="switchView('view-workout')" class="nav-btn flex flex-col items-center p-2 w-full text-slate-400"><i class="fa-solid fa-plus-circle text-xl"></i><span class="text-xs">Training</span></button>
+        <button onclick="switchView('view-exercises')" class="nav-btn flex flex-col items-center p-2 w-full text-slate-400"><i class="fa-solid fa-list text-xl"></i><span class="text-xs">Geräte</span></button>
+    </nav>
+
+    <script type="module">
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-app.js";
+        import { getAuth, signInAnonymously, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-auth.js";
+        import { getFirestore, collection, addDoc, serverTimestamp, onSnapshot, doc, deleteDoc, updateDoc, getDocs } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-firestore.js";
+
+        // =========================================================================
+        // HIER DEINEN FIREBASE-CODE AUS DER KONSOLE EINTRAGEN:
+        // =========================================================================
+        const firebaseConfig = {
+  apiKey: "AIzaSyAOgvwt-l9DUpPeMPE-Pl9znDhIo1B_xB4",
+  authDomain: "gitfit-3d78b.firebaseapp.com",
+  projectId: "gitfit-3d78b",
+  storageBucket: "gitfit-3d78b.firebasestorage.app",
+  messagingSenderId: "595413065350",
+  appId: "1:595413065350:web:2a0dde9defc2f750d4bb07"
+};
+        // =========================================================================
+
+        const app = initializeApp(firebaseConfig);
+        const auth = getAuth(app);
+        const db = getFirestore(app);
+        const appId = 'my-personal-gym-tracker';
+        
+        // --- State ---
+        let availableExercises = {}, availableEquipment = {}, selectedPrimary = [], selectedSecondary = [];
+        
+        // --- Init ---
+        window.addEventListener('DOMContentLoaded', async () => {
+            try {
+                await signInAnonymously(auth);
+                // Render Logic here...
+            } catch (err) {
+                console.error("Auth Error:", err);
+            }
+        });
+
+        window.switchView = (id) => {
+            document.querySelectorAll('.view-section').forEach(el => el.classList.add('hidden'));
+            document.getElementById(id).classList.remove('hidden');
+        };
+    </script>
+</body>
+</html>
